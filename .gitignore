@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+
+build/*
+.cache/*
+.*
+!.gitignore
+!.clang-format
+!.clang-tidy
+data
