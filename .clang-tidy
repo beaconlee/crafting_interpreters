@@ -20,6 +20,7 @@ Checks:
   -readability-inconsistent-declaration-parameter-name,
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
   -readability-convert-member-functions-to-static,
+  -readability-function-size,
 CheckOptions:
   # 配置认知复杂度（函数的复杂度阈值）
   - key: readability-function-cognitive-complexity.Threshold

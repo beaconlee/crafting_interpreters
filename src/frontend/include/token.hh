@@ -64,10 +64,10 @@ public:
                  const std::string_view lexeme,
                  const Literal &literal,
                  const unsigned int line)
-    : type_(type)
-    , lexeme_(lexeme)
-    , literal_(literal)
-    , line_(line)
+    : type_{type}
+    , lexeme_{lexeme}
+    , literal_{literal}
+    , line_{line}
   {}
 
   [[nodiscard]] TokenType

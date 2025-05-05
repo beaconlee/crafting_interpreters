@@ -2,6 +2,7 @@
 
 #include "token.hh"
 
+#include <iostream>
 #include <vector>
 #include <string>
 #include <string_view>
@@ -24,7 +25,7 @@ public:
       start_ = cur_;
       scan_token();
     }
-    tokens_.emplace_back(TokenType::END, "", "", line_);
+    tokens_.emplace_back(TokenType::END, "", "null", line_);
     return tokens_;
   }
 
@@ -34,11 +35,18 @@ private:
   {
     add_token(type, nullptr);
   }
+
   void
   add_token(TokenType type, Literal literal)
   {
     // 注意,这里的 cur_, start_ 和自己写时的区别
-    auto lexeme = source_.substr(start_, cur_ - start_);
+    // 现在自己猜想,应该是这里创建了局部的 std::string, 导致离开这个函数后,被释放掉了
+    auto lexeme =
+        static_cast<std::string_view>(source_).substr(start_, cur_ - start_);
+    // 这里自己一开始想用 get 方法来获取, 但是 get 方法需要的是一个编译期常量, 所以失败了
+    // std::cout << "add token lexeme:" << lexeme << ", literal: ";
+    // std::visit([](const auto &value) { std::cout << value; }, literal);
+    // std::cout << "\n";
 
     tokens_.emplace_back(type, lexeme, literal, line_);
   }
@@ -142,6 +150,7 @@ private:
           //   // lox::error
           // }
           // lox::error
+          std::cerr << "unknown char:" << c << "\n";
         }
         break;
     }
@@ -183,8 +192,13 @@ private:
     //    实际上传入0时,就什么都没有了
     // ! 这里自己还有一个点想错了, 到这里时, 不是 cur_ 代表引号, cur_ 代表的是引号的下一个了,
     // !         cur_ - 1 才是代表的引号
-    add_token(TokenType::STRING,
-              source_.substr(start_ + 1, cur_ - 1 - (start_ + 1)));
+    // std::cout << "add string:"
+    // << source_.substr(start_ + 1, cur_ - 1 - (start_ + 1)) << "\n";
+    // 同样的问题
+    add_token(
+        TokenType::STRING,
+        static_cast<std::string_view>(source_).substr(start_ + 1,
+                                                      cur_ - 1 - (start_ + 1)));
   }
 
   void
@@ -205,7 +219,12 @@ private:
       }
     }
     // cur_ 已经代表的是数字结束后的位置了
-    add_token(TokenType::NUMBER, source_.substr(start_, cur_ - start_));
+    add_token(TokenType::NUMBER,
+              std::stod(source_.substr(start_, cur_ - start_)));
+    // add_token(TokenType::NUMBER, 2.0);
+    // add_token(
+    //     TokenType::NUMBER,
+    //     static_cast<std::string_view>(source_).substr(start_, cur_ - start_));
   }
 
   void
@@ -290,9 +309,10 @@ private:
     else
     {
       type = TokenType::IDENTIFIER;
+      // std::cout << "literal:" << iden << "\n";
     }
 
-    add_token(type, iden);
+    add_token(type);
   }
 
   // 当匹配到时, 需要读取
@@ -320,7 +340,7 @@ private:
   static bool
   is_alpha(char c)
   {
-    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
   }
   static bool
   is_digit(char c)

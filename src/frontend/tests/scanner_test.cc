@@ -48,7 +48,7 @@ const std::unordered_map<TokenType, std::string> tokenTypeToString = {
     {TokenType::TRUE, "TRUE"},
     {TokenType::VAR, "VAR"},
     {TokenType::WHILE, "WHILE"},
-    {TokenType::END, "END"}};
+    {TokenType::END, "EOF"}};
 
 // 这里已经忘记了怎么实现自定义 format 了.
 template <>
@@ -116,6 +116,10 @@ struct std::formatter<beacon_lox::Literal>
             return std::format_to(ctx.out(), "{}", value ? "true" : "false");
           }
           // 因为 value 的类型只能是这4种
+          else if constexpr(std::is_same_v<T, double>)
+          {
+            return std::format_to(ctx.out(), "{}.0", value);
+          }
           else
           {
             return std::format_to(ctx.out(), "{}", value);
@@ -141,6 +145,7 @@ main(int /*argc*/, char ** /*argv*/)
 
   for(const auto token : tokens)
   {
+    // std::cout << "format:" << token.get_lexeme() << "\n";
     std::cout << std::format("{} {} {}\n",
                              token.get_type(),
                              token.get_lexeme(),
