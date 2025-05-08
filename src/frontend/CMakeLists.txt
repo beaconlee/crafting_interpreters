@@ -1,6 +1,6 @@
 # src/scanner/CMakeLists.txt
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -21,7 +21,11 @@ target_link_libraries(frontend PUBLIC
     
 )
 add_executable(test tests/scanner_test.cc)
+add_executable(ast tests/ast_print.cc)
 
 target_include_directories(test PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_include_directories(ast PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
