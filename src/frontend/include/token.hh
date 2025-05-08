@@ -5,7 +5,7 @@
 
 namespace beacon_lox
 {
-enum class TokenType
+enum TokenType
 { // Single-character tokens.
   LEFT_PAREN,
   RIGHT_PAREN,

@@ -23,6 +23,7 @@ public:
     while(!is_end())
     {
       start_ = cur_;
+      // 进行扫描时，需要先获取一个 char
       scan_token();
     }
     tokens_.emplace_back(TokenType::END, "", "null", line_);
@@ -87,14 +88,6 @@ private:
         add_token(TokenType::STAR);
         break;
       case '!':
-        // if(match('='))
-        // {
-        //   add_token(TokenType::BANG_EQUAL);
-        // }
-        // else
-        // {
-        //   add_token(TokenType::BANG);
-        // }
         add_token(match('=') ? TokenType::BANG_EQUAL : TokenType::BANG);
         break;
       case '=':
@@ -141,28 +134,11 @@ private:
         }
         else
         {
-          // if(is_digit(c))
-          // {
-          //   number();
-          // }
-          // else
-          // {
-          //   // lox::error
-          // }
-          // lox::error
           std::cerr << "unknown char:" << c << "\n";
         }
         break;
     }
   }
-
-  // bool
-  // match(char c)
-  // {
-  //   return peek() == c;
-  // }
-
-
 
   void
   string()
@@ -209,7 +185,6 @@ private:
     {
       advance();
     }
-
     if(peek() == '.' && is_digit(peek_next()))
     {
       advance();
