@@ -2,6 +2,7 @@
 
 #include <string_view>
 #include <variant>
+#include <format>
 
 namespace beacon_lox
 {
@@ -57,6 +58,7 @@ enum TokenType
 
 using Literal = std::variant<std::nullptr_t, std::string_view, double, bool>;
 
+
 class Token
 {
 public:
@@ -105,3 +107,85 @@ private:
 };
 
 } // namespace beacon_lox
+
+// 自定义格式化器
+template <>
+struct std::formatter<beacon_lox::Literal>
+{
+  constexpr auto
+  parse(std::format_parse_context &ctx)
+  {
+    return ctx.begin();
+  }
+
+  auto
+  format(const beacon_lox::Literal &literal, std::format_context &ctx) const
+  {
+    // visit 本身需要的也是一个函数对象, 这里使用lambda
+    // 没有使用重载的 () 运算符, 而是手动返回
+    return std::visit(
+        [&ctx](const auto &value)
+        {
+          using T = std::decay_t<decltype(value)>;
+          // if constexpr(std::is_same_v<T, std::nullptr_t>)
+          // {
+          //   return std::format_to(ctx.out(), "null");
+          // }
+          // else if constexpr(std::is_same_v<T, std::string_view> ||
+          //                   std::is_same_v<T, double>)
+          // {
+          //   return std::format_to(ctx.out(), "{}", value);
+          // }
+          // else if constexpr(std::is_same_v<T, bool>)
+          // {
+          //   return std::format_to(ctx.out(), "{}", value ? "true" : "false");
+          // }
+          if constexpr(std::is_same_v<T, std::nullptr_t>)
+          {
+            return std::format_to(ctx.out(), "null");
+          }
+          else if constexpr(std::is_same_v<T, bool>)
+          {
+            return std::format_to(ctx.out(), "{}", value ? "true" : "false");
+          }
+          // 因为 value 的类型只能是这4种
+          else if constexpr(std::is_same_v<T, double>)
+          {
+            // return std::format_to(ctx.out(), "{}", value);
+            // 对于输出精度的理解...
+            double d = 0.0;
+            // if(std::abs(std::modf(value, &d)) < 1e-10)
+            // {
+            //   return std::format_to(ctx.out(), "{:.1f}", value);
+            // }
+            return std::format_to(ctx.out(), "{}", value);
+          }
+          else
+          {
+            return std::format_to(ctx.out(), "{}", value);
+          }
+        },
+        literal);
+  }
+};
+
+
+
+// 自定义格式化器
+template <>
+struct std::formatter<beacon_lox::Token>
+{
+  constexpr auto
+  parse(std::format_parse_context &ctx)
+  {
+    return ctx.begin();
+  }
+
+  auto
+  format(const beacon_lox::Token &token, std::format_context &ctx) const
+  {
+    // visit 本身需要的也是一个函数对象, 这里使用lambda
+    // 没有使用重载的 () 运算符, 而是手动返回
+    return std::format_to(ctx.out(), "{}", token.get_lexeme());
+  }
+};
