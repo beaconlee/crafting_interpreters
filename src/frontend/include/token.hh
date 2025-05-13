@@ -21,7 +21,7 @@ enum TokenType
   STAR,
 
   // One or two character tokens.
-  BANG,
+  BANS,
   BANG_EQUAL,
   EQUAL,
   EQUAL_EQUAL,

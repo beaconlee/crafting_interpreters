@@ -88,7 +88,7 @@ private:
         add_token(TokenType::STAR);
         break;
       case '!':
-        add_token(match('=') ? TokenType::BANG_EQUAL : TokenType::BANG);
+        add_token(match('=') ? TokenType::BANG_EQUAL : TokenType::BANS);
         break;
       case '=':
         add_token(match('=') ? TokenType::EQUAL_EQUAL : TokenType::EQUAL);

@@ -5,67 +5,6 @@
 // #include <vector>
 #include <cmath>
 
-// 自定义格式化器
-template <>
-struct std::formatter<beacon_lox::Literal>
-{
-  constexpr auto
-  parse(std::format_parse_context &ctx)
-  {
-    return ctx.begin();
-  }
-
-  auto
-  format(const beacon_lox::Literal &literal, std::format_context &ctx) const
-  {
-    // visit 本身需要的也是一个函数对象, 这里使用lambda
-    // 没有使用重载的 () 运算符, 而是手动返回
-    return std::visit(
-        [&ctx](const auto &value)
-        {
-          using T = std::decay_t<decltype(value)>;
-          // if constexpr(std::is_same_v<T, std::nullptr_t>)
-          // {
-          //   return std::format_to(ctx.out(), "null");
-          // }
-          // else if constexpr(std::is_same_v<T, std::string_view> ||
-          //                   std::is_same_v<T, double>)
-          // {
-          //   return std::format_to(ctx.out(), "{}", value);
-          // }
-          // else if constexpr(std::is_same_v<T, bool>)
-          // {
-          //   return std::format_to(ctx.out(), "{}", value ? "true" : "false");
-          // }
-          if constexpr(std::is_same_v<T, std::nullptr_t>)
-          {
-            return std::format_to(ctx.out(), "null");
-          }
-          else if constexpr(std::is_same_v<T, bool>)
-          {
-            return std::format_to(ctx.out(), "{}", value ? "true" : "false");
-          }
-          // 因为 value 的类型只能是这4种
-          else if constexpr(std::is_same_v<T, double>)
-          {
-            // return std::format_to(ctx.out(), "{}", value);
-            // 对于输出精度的理解...
-            double d = 0.0;
-            // if(std::abs(std::modf(value, &d)) < 1e-10)
-            // {
-            //   return std::format_to(ctx.out(), "{:.1f}", value);
-            // }
-            return std::format_to(ctx.out(), "{}", value);
-          }
-          else
-          {
-            return std::format_to(ctx.out(), "{}", value);
-          }
-        },
-        literal);
-  }
-};
-
 
 
 std::string
@@ -128,21 +67,114 @@ to_string(const beacon_lox::Expr &expr)
   }
 }
 
-
 int
 main()
+{
+  auto expr_liter1{std::make_unique<beacon_lox::Expr>(
+      std::make_unique<beacon_lox::LiteralExpr>("beacon"))};
+  auto expr_liter2{std::make_unique<beacon_lox::Expr>(
+      std::make_unique<beacon_lox::LiteralExpr>(17.))};
+  auto expr_liter3{std::make_unique<beacon_lox::Expr>(
+      std::make_unique<beacon_lox::LiteralExpr>(true))};
+  auto expr_liter4{std::make_unique<beacon_lox::Expr>(
+      std::make_unique<beacon_lox::LiteralExpr>("uan"))};
+
+
+  beacon_lox::ExprVisitor visitor;
+  //  (beacon)
+  std::cout << std::format("expr_liter1:  {}\n",
+                           std::any_cast<std::string>(std::visit(
+                               [&visitor](const auto &value) -> std::any
+                               { return value->accept(&visitor); },
+                               *expr_liter1)));
+  //   (17)
+  std::cout << std::format("expr_liter2:  {}\n",
+                           std::any_cast<std::string>(std::visit(
+                               [&visitor](const auto &value) -> std::any
+                               { return value->accept(&visitor); },
+                               *expr_liter2)));
+  //  (true)
+  std::cout << std::format("expr_liter3:  {}\n",
+                           std::any_cast<std::string>(std::visit(
+                               [&visitor](const auto &value) -> std::any
+                               { return value->accept(&visitor); },
+                               *expr_liter3)));
+
+  beacon_lox::Token t1{beacon_lox::TokenType::MINUS, "-", "-", 21};
+  beacon_lox::Token t2{beacon_lox::TokenType::BANS, "!", "!", 21};
+  beacon_lox::Token t3{beacon_lox::TokenType::EQUAL_EQUAL, "==", "==", 21};
+  beacon_lox::Token t4{beacon_lox::TokenType::BANG_EQUAL, "!=", "!=", 21};
+
+
+  beacon_lox::Expr expr_unary1{
+      std::make_unique<beacon_lox::UnaryExpr>(std::move(*expr_liter1),
+                                              t1,
+                                              beacon_lox::UnaryOp::MINUS)};
+  // (MINUS - (beacon))
+  std::cout << std::format("expr_unary1:  {}\n",
+                           std::any_cast<std::string>(std::visit(
+                               [&visitor](const auto &value) -> std::any
+                               { return value->accept(&visitor); },
+                               expr_unary1)));
+  beacon_lox::Expr expr_unary2{
+      std::make_unique<beacon_lox::UnaryExpr>(std::move(*expr_liter2),
+                                              t2,
+                                              beacon_lox::UnaryOp::BANS)};
+  // (BANS ! (17))
+  std::cout << std::format("expr_unary2:  {}\n",
+                           std::any_cast<std::string>(std::visit(
+                               [&visitor](const auto &value) -> std::any
+                               { return value->accept(&visitor); },
+                               expr_unary2)));
+  beacon_lox::Expr expr_unary3{
+      std::make_unique<beacon_lox::UnaryExpr>(std::move(*expr_liter3),
+                                              t2,
+                                              beacon_lox::UnaryOp::BANS)};
+  // (BANS ! (true))
+  std::cout << std::format("expr_unary3:  {}\n",
+                           std::any_cast<std::string>(std::visit(
+                               [&visitor](const auto &value) -> std::any
+                               { return value->accept(&visitor); },
+                               expr_unary3)));
+  beacon_lox::Expr expr_binary1{std::make_unique<beacon_lox::BinaryExpr>(
+      std::move(expr_unary1),
+      t3,
+      beacon_lox::BinaryOp::EQUAL_EQUAL,
+      std::move(expr_unary2))};
+  std::cout << std::format("expr_binary1:  {}\n",
+                           std::any_cast<std::string>(std::visit(
+                               [&visitor](const auto &value) -> std::any
+                               { return value->accept(&visitor); },
+                               expr_binary1)));
+  beacon_lox::Expr expr_binary2{
+      std::make_unique<beacon_lox::BinaryExpr>(std::move(expr_binary1),
+                                               t4,
+                                               beacon_lox::BinaryOp::BANG_EQUAL,
+                                               std::move(expr_unary3))};
+  std::cout << std::format("expr_binary2:  {}\n",
+                           std::any_cast<std::string>(std::visit(
+                               [&visitor](const auto &value) -> std::any
+                               { return value->accept(&visitor); },
+                               expr_binary2)));
+  return 0;
+}
+
+
+int
+main2()
 {
   beacon_lox::Literal li("beacon");
   beacon_lox::Expr expr;
   expr = std::make_unique<beacon_lox::LiteralExpr>(li);
   std::cout << std::format("{}\n", to_string(expr));
 
+
   beacon_lox::Token minus(beacon_lox::TokenType::MINUS, "-", "-", 2);
-  beacon_lox::Expr binary{
+  beacon_lox::Expr unary{
       std::make_unique<beacon_lox::UnaryExpr>(std::move(expr),
                                               minus,
                                               beacon_lox::UnaryOp::MINUS)};
-  std::cout << std::format("{}\n", to_string(binary));
+  std::cout << std::format("{}\n", to_string(unary));
 
   beacon_lox::Expr b2{std::make_unique<beacon_lox::UnaryExpr>(
       std::make_unique<beacon_lox::LiteralExpr>(
