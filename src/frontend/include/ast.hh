@@ -261,7 +261,7 @@ public:
   grouping_expr_visitor(GroupingExpr *grouping) override
   {
     return std::format(
-        "(({}))",
+        "(grouping {})",
         std::visit([this](const auto &value) -> std::string
                    { return std::any_cast<std::string>(value->accept(this)); },
                    grouping->expr));

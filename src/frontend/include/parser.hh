@@ -16,6 +16,12 @@ public:
   // , end_iter_(tokens_.end())
   {}
 
+  auto
+  parse() -> Expr
+  {
+    return expression();
+  }
+
 private:
   auto
   expression() -> Expr
@@ -103,7 +109,7 @@ private:
           std::make_unique<UnaryExpr>(std::move(expr),
                                       op,
                                       static_cast<UnaryOp>(op.get_type()));
-      return expr;
+      return exp;
     }
 
     return primary();
@@ -112,10 +118,49 @@ private:
   auto
   primary() -> Expr
   {
-    return {};
+    if(match(TokenType::FALSE))
+    {
+      return std::make_unique<LiteralExpr>(false);
+    }
+    if(match(TokenType::TRUE))
+    {
+      return std::make_unique<LiteralExpr>(true);
+    }
+    if(match(TokenType::NIL))
+    {
+      return std::make_unique<LiteralExpr>(nullptr);
+    }
+    if(match(TokenType::NUMBER, TokenType::STRING))
+    {
+      auto token = previos();
+      return std::make_unique<LiteralExpr>(token.get_literal());
+    }
+
+    if(match(TokenType::LEFT_PAREN))
+    {
+      Expr exp = expression();
+      consume(TokenType::RIGHT_PAREN, "( not match!");
+      return std::make_unique<GroupingExpr>(std::move(exp));
+    }
+
+    throw std::runtime_error("Expect expression.");
   }
 
+  auto
+  consume(const TokenType &type, std::string_view sv) -> void
+  {
+    if(check(type))
+    {
+      advance();
+      return;
+    }
+    std::string str;
 
+    str += "cur type:";
+    str += std::to_string(static_cast<int>(tokens_[cur_].get_type()));
+    str += sv;
+    throw std::runtime_error(str);
+  }
 
   // 关于 match 自己的意图和作者的存在区别
   // 作者书中的意图是当发现匹配时,就会消耗掉这个token

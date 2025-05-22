@@ -22,6 +22,7 @@ Checks:
   -readability-convert-member-functions-to-static,
   -readability-function-size,
   -misc-non-private-member-variables-in-classes,
+  -misc-no-recursion,
 CheckOptions:
   # 配置认知复杂度（函数的复杂度阈值）
   - key: readability-function-cognitive-complexity.Threshold
