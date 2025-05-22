@@ -26,7 +26,7 @@ public:
       // 进行扫描时，需要先获取一个 char
       scan_token();
     }
-    tokens_.emplace_back(TokenType::END, "", "null", line_);
+    tokens_.emplace_back(TokenType::LOX_EOF, "", "null", line_);
     return tokens_;
   }
 

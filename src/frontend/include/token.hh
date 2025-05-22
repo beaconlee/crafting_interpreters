@@ -53,7 +53,7 @@ enum TokenType
   VAR,
   WHILE,
 
-  END
+  LOX_EOF
 };
 
 using Literal = std::variant<std::nullptr_t, std::string_view, double, bool>;
