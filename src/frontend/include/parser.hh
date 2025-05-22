@@ -154,13 +154,30 @@ private:
       advance();
       return;
     }
-    std::string str;
+    // std::string str;
 
-    str += "cur type:";
-    str += std::to_string(static_cast<int>(tokens_[cur_].get_type()));
-    str += sv;
-    throw std::runtime_error(str);
+    // str += "cur type:";
+    // str += std::to_string(static_cast<int>(tokens_[cur_].get_type()));
+    // str += sv;
+    // throw std::runtime_error(str);
+    throw error(peek(), sv);
   }
+
+
+  auto
+  error(Token token, std::string_view sv) -> std::exception
+  {
+    
+    throw ParseError(std::string(sv));
+  }
+
+  class ParseError : public std::runtime_error
+  {
+  public:
+    ParseError(const std::string &message = "Parse error occurred")
+      : std::runtime_error(message)
+    {}
+  };
 
   // 关于 match 自己的意图和作者的存在区别
   // 作者书中的意图是当发现匹配时,就会消耗掉这个token
