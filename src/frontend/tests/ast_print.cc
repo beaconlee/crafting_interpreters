@@ -2,7 +2,6 @@
 #include <format>
 #include <iomanip>
 #include <iostream>
-// #include <vector>
 #include <cmath>
 
 
