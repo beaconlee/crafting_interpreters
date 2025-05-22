@@ -56,16 +56,17 @@ private:
 
   //   return type == tokens_[cur_].get_type();
   // }
-  [[nodiscard]] auto
-  match(const TokenType &type) -> bool
-  {
-    if(check(type))
-    {
-      advance();
-      return true;
-    }
-    return false;
-  }
+  //* 可以合并到一个模板参数中
+  // [[nodiscard]] auto
+  // match(const TokenType &type) -> bool
+  // {
+  //   if(check(type))
+  //   {
+  //     advance();
+  //     return true;
+  //   }
+  //   return false;
+  // }
 
   // [[nodiscard]] auto
   // check(const TokenType &type) const -> bool
@@ -86,6 +87,11 @@ private:
       return false;
     }
 
+    // 这种空参数包是自己没有想到的, gpt 进行了补充
+    if constexpr(sizeof...(args) == 0)
+    {
+      return false; // 空参数包
+    }
     return ((tokens_[cur_].get_type() == args) || ...);
   }
 
@@ -93,6 +99,10 @@ private:
   [[nodiscard]] auto
   match(Args... args) -> bool
   {
+    // 添加静态断言, 确保传入的参数类型符合预期
+    static_assert((std::is_same_v<std::decay_t<Args>, TokenType> && ...),
+                  "All arguments must be of type TokenType");
+
     if(check(args...))
     {
       advance();
