@@ -22,10 +22,15 @@ target_link_libraries(frontend PUBLIC
 )
 add_executable(test tests/scanner_test.cc)
 add_executable(ast tests/ast_print.cc)
+add_executable(parser tests/parser_test.cc)
+
 
 target_include_directories(test PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 target_include_directories(ast PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_include_directories(parser PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )

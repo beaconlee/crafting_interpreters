@@ -31,8 +31,11 @@ private:
     {
       // Token operator = p
       auto op = previos();
-
-      // expr = std::make_unique<BinaryExpr>(std::move(expr),);
+      Expr right = comparsion();
+      expr = std::make_unique<BinaryExpr>(std::move(expr),
+                                          op,
+                                          static_cast<BinaryOp>(op.get_type()),
+                                          std::move(right));
     }
 
     return expr;
@@ -41,8 +44,78 @@ private:
   auto
   comparsion() -> Expr
   {
+    Expr exp = term();
+    while(match(TokenType::GREATER,
+                TokenType::GREATER_EQUAL,
+                TokenType::LESS,
+                TokenType::LESS_EQUAL))
+    {
+      auto op = previos();
+      Expr right = term();
+      exp = std::make_unique<BinaryExpr>(std::move(exp),
+                                         op,
+                                         static_cast<BinaryOp>(op.get_type()),
+                                         std::move(right));
+    }
+    return exp;
+  }
+
+  auto
+  term() -> Expr
+  {
+    Expr exp = factor();
+    while(match(TokenType::PLUS, TokenType::MINUS))
+    {
+      auto op = previos();
+      Expr right = factor();
+      exp = std::make_unique<BinaryExpr>(std::move(exp),
+                                         op,
+                                         static_cast<BinaryOp>(op.get_type()),
+                                         std::move(right));
+    }
+    return exp;
+  }
+
+  auto
+  factor() -> Expr
+  {
+    Expr exp = unary();
+    while(match(TokenType::STAR, TokenType::SLASH))
+    {
+      auto op = previos();
+      Expr right = unary();
+      exp = std::make_unique<BinaryExpr>(std::move(exp),
+                                         op,
+                                         static_cast<BinaryOp>(op.get_type()),
+                                         std::move(right));
+    }
+    return exp;
+  }
+
+  auto
+  unary() -> Expr
+  {
+    if(match(TokenType::BANS, TokenType::MINUS))
+    {
+      auto op = previos();
+      auto expr = primary();
+      Expr exp =
+          std::make_unique<UnaryExpr>(std::move(expr),
+                                      op,
+                                      static_cast<UnaryOp>(op.get_type()));
+      return expr;
+    }
+
+    return primary();
+  }
+
+  auto
+  primary() -> Expr
+  {
     return {};
   }
+
+
 
   // 关于 match 自己的意图和作者的存在区别
   // 作者书中的意图是当发现匹配时,就会消耗掉这个token

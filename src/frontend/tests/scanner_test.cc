@@ -1,15 +1,16 @@
 #include "scanner.hh"
+#include "ast.hh"
 #include <sstream>
 #include <fstream>
 #include <iostream>
 #include <format>
 #include <unordered_map>
-
+#include <functional>
 
 using beacon_lox::TokenType;
 
 // 完整的映射表
-const std::unordered_map<TokenType, std::string> tokenTypeToString = {
+const std::unordered_map<TokenType, std::string> token_type_2_string = {
     {TokenType::LEFT_PAREN, "LEFT_PAREN"},
     {TokenType::RIGHT_PAREN, "RIGHT_PAREN"},
     {TokenType::LEFT_BRACE, "LEFT_BRACE"},
@@ -21,7 +22,7 @@ const std::unordered_map<TokenType, std::string> tokenTypeToString = {
     {TokenType::SEMICOLON, "SEMICOLON"},
     {TokenType::SLASH, "SLASH"},
     {TokenType::STAR, "STAR"},
-    {TokenType::BANG, "BANG"},
+    {TokenType::BANS, "BANG"},
     {TokenType::BANG_EQUAL, "BANG_EQUAL"},
     {TokenType::EQUAL, "EQUAL"},
     {TokenType::EQUAL_EQUAL, "EQUAL_EQUAL"},
@@ -48,7 +49,7 @@ const std::unordered_map<TokenType, std::string> tokenTypeToString = {
     {TokenType::TRUE, "TRUE"},
     {TokenType::VAR, "VAR"},
     {TokenType::WHILE, "WHILE"},
-    {TokenType::END, "EOF"}};
+    {TokenType::LOX_EOF, "EOF"}};
 
 // 这里已经忘记了怎么实现自定义 format 了.
 template <>
@@ -59,6 +60,7 @@ public:
   parse(std::format_parse_context &ctx)
   {
     return ctx.begin();
+    std::placeholders::_1;
   }
 
 
@@ -66,68 +68,13 @@ public:
   auto
   format(const TokenType &value, FormatContext &context) const
   {
-    auto it = tokenTypeToString.find(value);
-    std::string str = (it == tokenTypeToString.end()) ? "Unkonwn" : it->second;
+    auto it = token_type_2_string.find(value);
+    std::string str =
+        (it == token_type_2_string.end()) ? "Unkonwn" : it->second;
     return std::format_to(context.out(), "{}", str);
   }
 };
 
-using Literal = std::variant<std::nullptr_t, std::string_view, double, bool>;
-
-
-// 自定义格式化器
-template <>
-struct std::formatter<beacon_lox::Literal>
-{
-  constexpr auto
-  parse(std::format_parse_context &ctx)
-  {
-    return ctx.begin();
-  }
-
-  auto
-  format(const beacon_lox::Literal &literal, std::format_context &ctx) const
-  {
-    // visit 本身需要的也是一个函数对象, 这里使用lambda
-    // 没有使用重载的 () 运算符, 而是手动返回
-    return std::visit(
-        [&ctx](const auto &value)
-        {
-          using T = std::decay_t<decltype(value)>;
-          // if constexpr(std::is_same_v<T, std::nullptr_t>)
-          // {
-          //   return std::format_to(ctx.out(), "null");
-          // }
-          // else if constexpr(std::is_same_v<T, std::string_view> ||
-          //                   std::is_same_v<T, double>)
-          // {
-          //   return std::format_to(ctx.out(), "{}", value);
-          // }
-          // else if constexpr(std::is_same_v<T, bool>)
-          // {
-          //   return std::format_to(ctx.out(), "{}", value ? "true" : "false");
-          // }
-          if constexpr(std::is_same_v<T, std::nullptr_t>)
-          {
-            return std::format_to(ctx.out(), "null");
-          }
-          else if constexpr(std::is_same_v<T, bool>)
-          {
-            return std::format_to(ctx.out(), "{}", value ? "true" : "false");
-          }
-          // 因为 value 的类型只能是这4种
-          else if constexpr(std::is_same_v<T, double>)
-          {
-            return std::format_to(ctx.out(), "{}.0", value);
-          }
-          else
-          {
-            return std::format_to(ctx.out(), "{}", value);
-          }
-        },
-        literal);
-  }
-};
 
 int
 main(int /*argc*/, char ** /*argv*/)
