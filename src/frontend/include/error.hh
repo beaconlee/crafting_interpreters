@@ -15,18 +15,18 @@ enum class LoxStatus
   ERROR
 };
 
-struct RuntimeError : public std::runtime_error
-{
-  Token _token;
-  explicit RuntimeError(const Token &token, const std::string &msg)
-    : std::runtime_error(msg)
-    , _token(token)
-  {}
-};
 
 class Error
 {
 public:
+  struct RuntimeError : public std::runtime_error
+  {
+    Token _token;
+    explicit RuntimeError(const Token &token, const std::string &msg)
+      : std::runtime_error(msg)
+      , _token(token)
+    {}
+  };
   void
   error(const long unsigned int line, const std::string_view msg)
   {
@@ -65,4 +65,8 @@ private:
   std::vector<std::string> errs_;
   LoxStatus status_{LoxStatus::OK};
 };
+
+// 全局错误实例（可选，方便使用宏）
+extern Error g_error;
+
 } // namespace beacon_lox

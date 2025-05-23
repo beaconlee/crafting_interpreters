@@ -1,8 +1,9 @@
 #pragma once
+#include <vector>
 
+#include "error.hh"
 #include "ast.hh"
 #include "token.hh"
-#include <vector>
 
 
 namespace beacon_lox
@@ -160,15 +161,14 @@ private:
     // str += std::to_string(static_cast<int>(tokens_[cur_].get_type()));
     // str += sv;
     // throw std::runtime_error(str);
-    throw error(peek(), sv);
+    g_error.error(error(peek(), sv));
   }
 
 
   auto
-  error(Token token, std::string_view sv) -> std::exception
+  error(Token token, std::string_view sv) -> Error::RuntimeError
   {
-    
-    throw ParseError(std::string(sv));
+    throw Error::RuntimeError(token, std::string(sv));
   }
 
   class ParseError : public std::runtime_error
@@ -178,6 +178,35 @@ private:
       : std::runtime_error(message)
     {}
   };
+
+  auto
+  synchronize() -> void
+  {
+    advance();
+    while(!is_at_end())
+    {
+      if(previos().get_type() == TokenType::SEMICOLON)
+      {
+        return;
+      }
+
+      switch(previos().get_type())
+      {
+        case CLASS:
+        case FUN:
+        case VAR:
+        case FOR:
+        case IF:
+        case PRINT:
+        case WHILE:
+        case RETURN:
+          return;
+        default:
+          break;
+      }
+      advance();
+    }
+  }
 
   // 关于 match 自己的意图和作者的存在区别
   // 作者书中的意图是当发现匹配时,就会消耗掉这个token
