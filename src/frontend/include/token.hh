@@ -1,9 +1,9 @@
 #pragma once
 
-#include <functional>
-#include <string_view>
-#include <variant>
 #include <format>
+#include <string_view>
+#include <unordered_map>
+#include <variant>
 
 namespace beacon_lox
 {
@@ -157,12 +157,24 @@ struct std::formatter<beacon_lox::Literal>
           {
             // return std::format_to(ctx.out(), "{}", value);
             // 对于输出精度的理解...
-            double d = 0.0;
             // if(std::abs(std::modf(value, &d)) < 1e-10)
             // {
             //   return std::format_to(ctx.out(), "{:.1f}", value);
             // }
-            return std::format_to(ctx.out(), "{}", value);
+            // 使用 std::to_string 获取完整小数表示
+            std::string str = std::format("{:g}", value);
+            // 移除尾部多余的 0
+            // str.erase(str.find_last_not_of('0') + 1, std::string::npos);
+            // 如果没有小数点，添加 .0 确保至少一位小数
+            // if(str.find('.') == str.size() - 1)
+            // {
+            //   str += "0";
+            // }
+            if(str.find('.') == std::string::npos)
+            {
+              str += ".0"; // 确保至少 1 位小数
+            }
+            return std::format_to(ctx.out(), "{}", str);
           }
           else
           {
@@ -247,7 +259,6 @@ public:
   parse(std::format_parse_context &ctx)
   {
     return ctx.begin();
-    std::placeholders::_1;
   }
 
 
