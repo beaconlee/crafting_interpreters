@@ -1,9 +1,9 @@
 #include <sstream>
 #include <fstream>
 
-#include "parser.hh"
-#include "scanner.hh"
-#include "interpreter.hh"
+#include "frontend/include/parser.hh"
+#include "frontend/include/scanner.hh"
+#include "interpreter/include/interpreter.hh"
 
 
 int

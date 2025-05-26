@@ -20,17 +20,24 @@ target_include_directories(frontend PUBLIC
 target_link_libraries(frontend PUBLIC
     
 )
+
+# 定义 frontend 库
+add_library(error STATIC
+    src/error.cc
+)
+target_include_directories(error PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
 add_executable(test tests/scanner_test.cc)
 add_executable(ast tests/ast_print.cc)
 add_executable(parser tests/parser_test.cc src/error.cc)
-add_executable(interpreter tests/interpreter_test.cc src/error.cc)
 
 
 set(executables
   test
   ast
   parser
-  interpreter
 )
 
 foreach(execu  IN ITEMS ${executables})

@@ -15,3 +15,4 @@ set(CMAKE_BUILD_TYPE Debug)
 
 
 add_subdirectory(src/frontend)
+add_subdirectory(src/interpreter)

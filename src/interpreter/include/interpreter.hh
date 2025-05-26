@@ -1,8 +1,8 @@
 #pragma once
 
 
-#include "ast.hh"
-#include "error.hh"
+#include "frontend/include/ast.hh"
+#include "frontend/include/error.hh"
 #include <iostream>
 
 namespace beacon_lox
