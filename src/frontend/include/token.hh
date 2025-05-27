@@ -66,6 +66,7 @@ using Literal = std::variant<std::nullptr_t, std::string_view, double, bool>;
 class Token
 {
 public:
+  // lexeme n. 词位，词素
   explicit Token(const TokenType type,
                  const std::string_view lexeme,
                  const Literal &literal,
@@ -150,7 +151,7 @@ struct std::formatter<beacon_lox::Literal>
           }
           else if constexpr(std::is_same_v<T, bool>)
           {
-            return std::format_to(ctx.out(), "{}", value ? "true" : "false");
+            return std::format_to(ctx.out(), "{:s}", value);
           }
           // 因为 value 的类型只能是这4种
           else if constexpr(std::is_same_v<T, double>)
