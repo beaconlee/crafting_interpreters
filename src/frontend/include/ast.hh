@@ -23,10 +23,10 @@ enum class BinaryOp
   STAR = static_cast<int>(TokenType::STAR),
   BANG_EQUAL = static_cast<int>(TokenType::BANG_EQUAL),
   EQUAL_EQUAL = static_cast<int>(TokenType::EQUAL_EQUAL),
-  LESS_EQUAL = static_cast<int>(TokenType::LESS_EQUAL),
+  GREATER = static_cast<int>(TokenType::GREATER),
   GREATER_EQUAL = static_cast<int>(TokenType::GREATER_EQUAL),
   LESS = static_cast<int>(TokenType::LESS),
-  GREATER = static_cast<int>(TokenType::GREATER),
+  LESS_EQUAL = static_cast<int>(TokenType::LESS_EQUAL),
 };
 
 
