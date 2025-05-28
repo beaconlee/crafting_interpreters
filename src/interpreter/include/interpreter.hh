@@ -1,9 +1,9 @@
 #pragma once
 
+#include <iostream>
 
 #include "frontend/include/ast.hh"
 #include "frontend/include/error.hh"
-#include <iostream>
 
 namespace beacon_lox
 {
@@ -19,9 +19,10 @@ public:
       auto value = evaluate(expr);
       std::cout << "result: " << stringify(value) << "\n";
     }
-    catch(const std::exception &e)
+    catch(const Error::RuntimeError &e)
     {
-      std::cout << "catch exception: " << e.what() << "\n";
+      // std::cout << "catch exception: " << e.what() << "\n";
+      runtime_error(e);
     }
   }
 
@@ -56,6 +57,7 @@ public:
       case UnaryOp::MINUS:
         try
         {
+          check_number_operand(unary->token, value);
           return -std::any_cast<double>(value);
         }
         catch(std::exception &e)
@@ -81,16 +83,42 @@ public:
     switch(binary->op)
     {
       case BinaryOp::PLUS:
-        return std::any_cast<double>(left) + std::any_cast<double>(right);
-      case BinaryOp::MINUS:
-      case BinaryOp::SLASH:
-      case BinaryOp::STAR:
+        if(is_type<double>(left) && is_type<double>(right))
+        {
+          return std::any_cast<double>(left) + std::any_cast<double>(right);
+        }
+        if(is_type<std::string>(left) && is_type<std::string>(right))
+        {
+          return std::any_cast<std::string>(left) +
+                 std::any_cast<std::string>(right);
+        }
+        throw Error::RuntimeError(binary->token, "oprand must be two strings!");
+        break;
       case BinaryOp::BANG_EQUAL:
+        return !is_equal(left, right);
       case BinaryOp::EQUAL_EQUAL:
-      case BinaryOp::LESS_EQUAL:
-      case BinaryOp::GREATER_EQUAL:
-      case BinaryOp::LESS:
+        return is_equal(left, right);
+      case BinaryOp::MINUS:
+        check_number_operand(binary->token, left, right);
+        return std::any_cast<double>(left) - std::any_cast<double>(right);
+      case BinaryOp::SLASH:
+        check_number_operand(binary->token, left, right);
+        return std::any_cast<double>(left) / std::any_cast<double>(right);
+      case BinaryOp::STAR:
+        check_number_operand(binary->token, left, right);
+        return std::any_cast<double>(left) * std::any_cast<double>(right);
       case BinaryOp::GREATER:
+        check_number_operand(binary->token, left, right);
+        return std::any_cast<double>(left) > std::any_cast<double>(right);
+      case BinaryOp::GREATER_EQUAL:
+        check_number_operand(binary->token, left, right);
+        return std::any_cast<double>(left) >= std::any_cast<double>(right);
+      case BinaryOp::LESS:
+        check_number_operand(binary->token, left, right);
+        return std::any_cast<double>(left) < std::any_cast<double>(right);
+      case BinaryOp::LESS_EQUAL:
+        check_number_operand(binary->token, left, right);
+        return std::any_cast<double>(left) <= std::any_cast<double>(right);
         break;
     }
     return true;
@@ -99,6 +127,18 @@ public:
   grouping_expr_visitor(GroupingExpr *grouping) override
   {
     return evaluate(grouping->expr);
+  }
+
+  [[nodiscard]] bool
+  had_runtime_error() const
+  {
+    return had_runtime_error_;
+  }
+
+  [[nodiscard]] bool
+  had_error() const
+  {
+    return had_error_;
   }
 
 private:
@@ -131,6 +171,7 @@ private:
 
     return std::any_cast<std::string>(any);
   }
+
   // 除了 nullptr 或者 false, 其它任何的东西都是 true
   bool
   is_true(std::any value)
@@ -148,11 +189,103 @@ private:
     return true;
   }
 
+  // bool
+  // is_equal(const std::any &left, const std::any &right)
+  // {
+  //   if(is_type<std::nullptr_t>(left) && is_type<std::nullptr_t>(right))
+  //   {
+  //     return true;
+  //   }
+  //   if(is_type<std::nullptr_t>(left))
+  //   {
+  //     return false;
+  //   }
+  //   return left == right;
+  // }
+
+  bool
+  is_equal(const std::any &left, const std::any &right)
+  {
+    // 1. 两个都是空值（std::nullptr_t）
+    if(is_type<std::nullptr_t>(left) && is_type<std::nullptr_t>(right))
+    {
+      return true;
+    }
+    // 2. 只有一个为空值
+    if(is_type<std::nullptr_t>(left) || is_type<std::nullptr_t>(right))
+    {
+      return false;
+    }
+    // 3. 类型不同
+    if(left.type() != right.type())
+    {
+      return false;
+    }
+    // 4. 类型相同，比较值
+    // 为了支持多种类型，这里需要针对具体类型进行 any_cast 并比较
+    // 示例：假设支持 int、double、std::string 类型
+    try
+    {
+      if(is_type<double>(left))
+      {
+        return std::any_cast<double>(left) == std::any_cast<double>(right);
+      }
+      if(is_type<std::string>(left))
+      {
+        return std::any_cast<std::string>(left) ==
+               std::any_cast<std::string>(right);
+      }
+      // 可以根据需要添加更多类型支持
+      // 如果类型不支持比较，抛出异常或返回 false
+      return false;
+    }
+    catch(const std::bad_any_cast &)
+    {
+      return false; // 转换失败时返回 false
+    }
+  }
+
   template <typename T>
   bool
   is_type(const std::any &any)
   {
     return any.type() == typeid(T);
   }
+
+  void
+  check_number_operand(const Token &token, const std::any &operand)
+  {
+    if(is_type<double>(operand))
+    {
+      return;
+    }
+
+    throw Error::RuntimeError(token, "oprand must be a number!");
+  }
+
+  void
+  check_number_operand(const Token &token,
+                       const std::any &left,
+                       const std::any &right)
+  {
+    if(is_type<double>(left) && is_type<double>(right))
+    {
+      return;
+    }
+
+    throw Error::RuntimeError(token, "oprand must be two numbers!");
+  }
+
+  void
+  runtime_error(const Error::RuntimeError &rerr)
+  {
+    std::cout << std::format("{} [line:{}]\n",
+                             rerr.what(),
+                             rerr._token.get_line());
+    had_runtime_error_ = true;
+  }
+
+  bool had_runtime_error_{false};
+  bool had_error_{false};
 };
 } // namespace beacon_lox

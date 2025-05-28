@@ -49,6 +49,16 @@ main(int /*argc*/, char ** /*argv*/)
     // 这里有个问题, interpreter 本质是一个 visitor, 所以这里不太清楚应该如何在 Parser 中使用
     // std::cout << "expr idx:" << expr.index() << "\n";
     inter.interpret(expr);
+
+    if(inter.had_runtime_error())
+    {
+      return 70;
+    }
+
+    if(inter.had_error())
+    {
+      return 65;
+    }
   }
   catch(const std::exception &e)
   {
